@@ -1,7 +1,7 @@
 # Zscaler Bulk URL Uploader Docker Image
 FROM python:3.11-slim
 
-LABEL maintainer="your-email@example.com"
+LABEL maintainer="dunwright@gmail.com"
 LABEL description="Zscaler Bulk URL Uploader - Secure bulk upload of URLs to ZIA custom categories"
 LABEL version="1.0.0"
 
