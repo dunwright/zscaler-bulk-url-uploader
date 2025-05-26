@@ -1,0 +1,20 @@
+# Zscaler Bulk URL Uploader Requirements
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+requests>=2.28.0
+PyJWT>=2.6.0
+cryptography>=39.0.0
+PyYAML>=6.0
+
+# Development dependencies (optional)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=22.0.0
+flake8>=5.0.0
+mypy>=1.0.0
+pre-commit>=3.0.0
+
+# Documentation dependencies (optional)
+sphinx>=5.0.0
+sphinx-rtd-theme>=1.0.0

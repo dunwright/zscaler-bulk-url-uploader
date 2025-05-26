@@ -1,0 +1,55 @@
+# Zscaler Bulk URL Uploader Configuration
+# Copy this file to config.yaml and customize with your settings
+
+zscaler:
+  # Your Zscaler vanity domain (e.g., 'company' for company.zslogin.net)
+  vanity_domain: "your-company"
+  
+  # OAuth Client ID from ZIdentity Admin Portal
+  client_id: "your-client-id"
+  
+  # Certificate-based authentication (RECOMMENDED)
+  private_key_path: "./private_key.pem"
+  private_key_password: ""  # Leave empty if key is not encrypted
+  
+  # Alternative: Client Secret authentication (LESS SECURE)
+  # client_secret: "your-client-secret"
+  
+  # API endpoints (usually don't need to change these)
+  base_url: "https://api.zsapi.net/zia/api/v1"
+  token_url_template: "https://{vanity_domain}.zslogin.net/oauth2/v1/token"
+  audience: "https://api.zscaler.com"
+
+upload:
+  # Number of URLs to upload in each batch (max 25,000 total per org)
+  batch_size: 100
+  
+  # Number of retry attempts for failed requests
+  retry_attempts: 3
+  
+  # Request timeout in seconds
+  timeout: 60
+  
+  # Create backup of existing URLs before upload
+  backup_existing: true
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+  
+  # Log file path (relative or absolute)
+  file: "zscaler_uploader.log"
+  
+  # Log message format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Optional: Default CSV and category settings
+defaults:
+  # Default CSV file path
+  csv_file: ""
+  
+  # Default target category (name or ID)
+  target_category: ""
+  
+  # Skip duplicate confirmation prompt
+  auto_remove_duplicates: false

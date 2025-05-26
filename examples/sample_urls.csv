@@ -1,0 +1,11 @@
+URL,Category,Description
+example.com,Business,Example business site
+https://test.com,Development,Test environment
+badsite.com,Blocked,Known malicious site  
+subdomain.example.org,Business,Subdomain example
+192.168.1.100,Internal,Internal IP address
+https://social.example.com,Social Media,Social platform
+news.example.com,News,News website
+shop.example.com,Shopping,E-commerce site
+blog.example.com,Blog,Company blog
+docs.example.com,Documentation,Technical docs
