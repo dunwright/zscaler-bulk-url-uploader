@@ -569,10 +569,10 @@ When reporting issues, include:
 
 ### Support Channels
 
-- 🐛 [GitHub Issues](https://github.com/your-username/zscaler-bulk-url-uploader/issues)
-- 💬 [GitHub Discussions](https://github.com/your-username/zscaler-bulk-url-uploader/discussions)
-- 📧 [Email Support](mailto:your-email@example.com)
-- 📚 [Documentation](https://your-username.github.io/zscaler-bulk-url-uploader/)
+- 🐛 [GitHub Issues](https://github.com/dunwright/zscaler-bulk-url-uploader/issues)
+- 💬 [GitHub Discussions](https://github.com/dunwright/zscaler-bulk-url-uploader/discussions)
+- 📧 [Email Support](mailto:dunwright@gmail.com)
+- 📚 [Documentation](https://dunwright.github.io/zscaler-bulk-url-uploader/)
 
 ### Related Documentation
 
