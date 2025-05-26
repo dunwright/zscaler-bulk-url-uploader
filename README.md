@@ -313,10 +313,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 [Report Bugs](https://github.com/your-username/zscaler-bulk-url-uploader/issues)
-- 💡 [Request Features](https://github.com/your-username/zscaler-bulk-url-uploader/issues)
-- 📖 [Read Documentation](https://your-username.github.io/zscaler-bulk-url-uploader/)
-- 💬 [Discussions](https://github.com/your-username/zscaler-bulk-url-uploader/discussions)
+- 🐛 [Report Bugs](https://github.com/dunwright/zscaler-bulk-url-uploader/issues)
+- 💡 [Request Features](https://github.com/dunwright/zscaler-bulk-url-uploader/issues)
+- 📖 [Read Documentation](https://dunwright.github.io/zscaler-bulk-url-uploader/)
+- 💬 [Discussions](https://github.com/dunwright/zscaler-bulk-url-uploader/discussions)
 
 ---
 
