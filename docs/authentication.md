@@ -347,5 +347,5 @@ After authentication setup:
 
 - 🔧 [Configuration Guide](configuration.md)
 - 🐛 [Troubleshooting Guide](troubleshooting.md)
-- 💬 [Community Discussions](https://github.com/your-username/zscaler-bulk-url-uploader/discussions)
+- 💬 [Community Discussions](https://github.com/dunwright/zscaler-bulk-url-uploader/discussions)
 - 📧 [Contact Support](mailto:your-email@example.com)
