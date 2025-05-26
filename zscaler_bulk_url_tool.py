@@ -7,7 +7,7 @@ custom URL categories with certificate-based authentication.
 
 Author: GitHub Community
 License: MIT
-Repository: https://github.com/your-username/zscaler-bulk-url-uploader
+Repository: https://github.com/dunwright/zscaler-bulk-url-uploader
 """
 
 import argparse
