@@ -21,7 +21,7 @@ This guide covers installation of the Zscaler Bulk URL Uploader on various platf
 ### Option 1: Direct Download
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/zscaler-bulk-url-uploader.git
+git clone https://github.com/dunwright/zscaler-bulk-url-uploader.git
 cd zscaler-bulk-url-uploader
 
 # Install dependencies
@@ -54,7 +54,7 @@ sudo apt install python3 python3-pip python3-venv
 sudo apt install build-essential libssl-dev libffi-dev python3-dev
 
 # Clone and install
-git clone https://github.com/your-username/zscaler-bulk-url-uploader.git
+git clone https://github.com/dunwright/zscaler-bulk-url-uploader.git
 cd zscaler-bulk-url-uploader
 pip3 install -r requirements.txt
 ```
@@ -67,7 +67,7 @@ sudo yum groupinstall "Development Tools"
 sudo yum install openssl-devel libffi-devel
 
 # Clone and install
-git clone https://github.com/your-username/zscaler-bulk-url-uploader.git
+git clone https://github.com/dunwright/zscaler-bulk-url-uploader.git
 cd zscaler-bulk-url-uploader
 pip3 install -r requirements.txt
 ```
@@ -78,7 +78,7 @@ pip3 install -r requirements.txt
 # Download and install Git from git-scm.com
 
 # Clone repository
-git clone https://github.com/your-username/zscaler-bulk-url-uploader.git
+git clone https://github.com/dunwright/zscaler-bulk-url-uploader.git
 cd zscaler-bulk-url-uploader
 
 # Install dependencies
@@ -94,7 +94,7 @@ pip install -r requirements.txt
 brew install python3 openssl libffi
 
 # Clone and install
-git clone https://github.com/your-username/zscaler-bulk-url-uploader.git
+git clone https://github.com/dunwright/zscaler-bulk-url-uploader.git
 cd zscaler-bulk-url-uploader
 pip3 install -r requirements.txt
 ```
@@ -139,18 +139,18 @@ deactivate
 ### Using Pre-built Image (when available)
 ```bash
 # Pull image
-docker pull your-username/zscaler-bulk-uploader:latest
+docker pull dunwright/zscaler-bulk-uploader:latest
 
 # Run container
 docker run -v $(pwd)/config:/app/config \
            -v $(pwd)/data:/app/data \
-           your-username/zscaler-bulk-uploader:latest --help
+           dunwright/zscaler-bulk-uploader:latest --help
 ```
 
 ### Building from Source
 ```bash
 # Clone repository
-git clone https://github.com/your-username/zscaler-bulk-url-uploader.git
+git clone https://github.com/dunwright/zscaler-bulk-url-uploader.git
 cd zscaler-bulk-url-uploader
 
 # Build Docker image
@@ -168,7 +168,7 @@ For contributors and developers:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/zscaler-bulk-url-uploader.git
+git clone https://github.com/dunwright/zscaler-bulk-url-uploader.git
 cd zscaler-bulk-url-uploader
 
 # Create virtual environment
@@ -288,7 +288,7 @@ pip uninstall zscaler-bulk-url-uploader
 docker rm zscaler-uploader
 
 # Remove image
-docker rmi your-username/zscaler-bulk-uploader
+docker rmi dunwright/zscaler-bulk-uploader
 ```
 
 ## Next Steps
@@ -300,6 +300,6 @@ After installation:
 
 ## Getting Help
 
-- 🐛 [Report Installation Issues](https://github.com/your-username/zscaler-bulk-url-uploader/issues)
-- 💬 [Ask Questions](https://github.com/your-username/zscaler-bulk-url-uploader/discussions)
-- 📖 [Read Documentation](https://your-username.github.io/zscaler-bulk-url-uploader/)
+- 🐛 [Report Installation Issues](https://github.com/dunwright/zscaler-bulk-url-uploader/issues)
+- 💬 [Ask Questions](https://github.com/dunwright/zscaler-bulk-url-uploader/discussions)
+- 📖 [Read Documentation](https://dunwright.github.io/zscaler-bulk-url-uploader/)
