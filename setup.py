@@ -29,11 +29,11 @@ setup(
     description="Bulk upload URLs to Zscaler Internet Access custom URL categories",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/your-username/zscaler-bulk-url-uploader",
+    url="https://github.com/dunwright/zscaler-bulk-url-uploader",
     project_urls={
-        "Bug Tracker": "https://github.com/your-username/zscaler-bulk-url-uploader/issues",
-        "Documentation": "https://your-username.github.io/zscaler-bulk-url-uploader/",
-        "Source Code": "https://github.com/your-username/zscaler-bulk-url-uploader",
+        "Bug Tracker": "https://github.com/dunwright/zscaler-bulk-url-uploader/issues",
+        "Documentation": "https://dunwright.github.io/zscaler-bulk-url-uploader/",
+        "Source Code": "https://github.com/dunwright/zscaler-bulk-url-uploader",
     },
     classifiers=[
         "Development Status :: 4 - Beta",
