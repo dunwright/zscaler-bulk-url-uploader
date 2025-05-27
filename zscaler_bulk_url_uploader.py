@@ -679,7 +679,7 @@ Examples:
         print("   openssl req -new -x509 -key private_key.pem -out certificate.pem -days 365")
         print("\n3. Upload certificate.pem to Zscaler ZIdentity Admin Portal")
         print("4. Use private_key.pem with this application")
-        print("\n5. Run: python zscaler_bulk_uploader.py --generate-config")
+        print("\n5. Run: python zscaler_bulk_url_uploader.py --generate-config")
         return
     
     try:
