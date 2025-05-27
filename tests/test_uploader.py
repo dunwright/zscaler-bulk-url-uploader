@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch, MagicMock
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from zscaler_bulk_uploader import (
+from zscaler_bulk_url_uploader import (
     ZscalerURLUploader,
     clean_url,
     validate_url,
@@ -185,7 +185,7 @@ class TestZscalerUploader:
         assert self.uploader.access_token is None
         assert 'User-Agent' in self.uploader.session.headers
     
-    @patch('zscaler_bulk_uploader.load_pem_private_key')
+    @patch('zscaler_bulk_url_uploader.load_pem_private_key')
     @patch('builtins.open')
     def test_load_private_key_success(self, mock_open, mock_load_key):
         """Test successful private key loading"""
@@ -201,7 +201,7 @@ class TestZscalerUploader:
         with pytest.raises(AuthenticationError):
             self.uploader.load_private_key('/nonexistent/key.pem')
     
-    @patch('zscaler_bulk_uploader.jwt.encode')
+    @patch('zscaler_bulk_url_uploader.jwt.encode')
     def test_create_jwt_assertion(self, mock_jwt_encode):
         """Test JWT assertion creation"""
         mock_jwt_encode.return_value = 'test-token'
@@ -363,7 +363,7 @@ class TestExceptions:
 class TestIntegration:
     """Integration tests (require mocking external dependencies)"""
     
-    @patch('zscaler_bulk_uploader.ZscalerURLUploader')
+    @patch('zscaler_bulk_url_uploader.ZscalerURLUploader')
     def test_full_workflow_mock(self, mock_uploader_class):
         """Test full workflow with mocked uploader"""
         # Set up mock uploader instance
