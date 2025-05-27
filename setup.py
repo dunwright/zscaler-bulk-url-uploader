@@ -71,7 +71,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "zscaler-uploader=zscaler_bulk_uploader:main",
+            "zscaler-uploader=zscaler_bulk_url_uploader:main",
         ],
     },
     include_package_data=True,
