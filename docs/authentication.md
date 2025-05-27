@@ -117,7 +117,7 @@ export ZSCALER_PRIVATE_KEY_PASSWORD=""  # Optional
 
 ```bash
 # Test with dry run
-python zscaler_bulk_uploader.py --csv examples/sample_urls.csv --dry-run --verbose
+python zscaler_bulk_url_uploader.py --csv examples/sample_urls.csv --dry-run --verbose
 
 # Should show successful authentication message
 ```
@@ -160,8 +160,8 @@ shred -vfz -n 3 old_private_key.pem
 ./examples/generate_keys.sh --key-file prod_private_key.pem --cert-file prod_certificate.pem
 
 # Use different config files
-python zscaler_bulk_uploader.py --config dev_config.yaml --csv urls.csv
-python zscaler_bulk_uploader.py --config prod_config.yaml --csv urls.csv
+python zscaler_bulk_url_uploader.py --config dev_config.yaml --csv urls.csv
+python zscaler_bulk_url_uploader.py --config prod_config.yaml --csv urls.csv
 ```
 
 ## Client Secret Authentication
@@ -253,7 +253,7 @@ Response: {"detail": "unauthorized"}
 
 Enable verbose logging:
 ```bash
-python zscaler_bulk_uploader.py --verbose --dry-run --csv examples/sample_urls.csv
+python zscaler_bulk_url_uploader.py --verbose --dry-run --csv examples/sample_urls.csv
 ```
 
 Check log files:
