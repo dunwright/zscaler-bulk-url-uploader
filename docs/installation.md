@@ -198,7 +198,7 @@ After installation, verify everything works:
 python zscaler_bulk_url_uploader.py --version
 
 # Test import
-python -c "import zscaler_bulk_uploader; print('Import successful')"
+python -c "import zscaler_bulk_url_uploader; print('Import successful')"
 
 # Check dependencies
 python -c "import jwt, cryptography, requests, yaml; print('All dependencies available')"
