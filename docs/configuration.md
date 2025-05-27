@@ -136,7 +136,7 @@ export ZSCALER_DRY_RUN="false"
 
 ```bash
 # Core options
-python zscaler_bulk_uploader.py \
+python zscaler_bulk_url_uploader.py \
   --config /path/to/config.yaml \     # Configuration file
   --csv /path/to/urls.csv \           # CSV file with URLs  
   --category "Category Name" \        # Target category
@@ -144,7 +144,7 @@ python zscaler_bulk_uploader.py \
   --verbose                           # Enable debug logging
 
 # Utility options
-python zscaler_bulk_uploader.py \
+python zscaler_bulk_url_uploader.py \
   --generate-config \                 # Create sample config file
   --help-auth \                       # Show authentication help
   --version                           # Show version info
@@ -439,7 +439,7 @@ The application validates configuration on startup:
 
 ```bash
 # Test configuration
-python zscaler_bulk_uploader.py --config config.yaml --dry-run --csv examples/sample_urls.csv
+python zscaler_bulk_url_uploader.py --config config.yaml --dry-run --csv examples/sample_urls.csv
 ```
 
 Common validation errors:
@@ -524,7 +524,7 @@ csv:
 ```bash
 # Use different configs per environment
 export ENVIRONMENT="production"
-python zscaler_bulk_uploader.py --config "config_${ENVIRONMENT}.yaml" --csv urls.csv
+python zscaler_bulk_url_uploader.py --config "config_${ENVIRONMENT}.yaml" --csv urls.csv
 ```
 
 ### Configuration Inheritance
@@ -691,10 +691,10 @@ def decrypt_config_section(encrypted_data, key):
 #### Configuration Not Found
 ```bash
 # Check configuration search paths
-python zscaler_bulk_uploader.py --help-config
+python zscaler_bulk_url_uploader.py --help-config
 
 # Enable verbose logging to see config loading
-python zscaler_bulk_uploader.py --verbose --dry-run
+python zscaler_bulk_url_uploader.py --verbose --dry-run
 ```
 
 #### Environment Variable Override
