@@ -357,7 +357,7 @@ HTTP_STATUS = {
 
 ### Basic Usage Pattern
 ```python
-from zscaler_bulk_uploader import ZscalerURLUploader, load_config, setup_logging
+from zscaler_bulk_url_uploader import ZscalerURLUploader, load_config, setup_logging
 
 # Load configuration
 config = load_config("config.yaml")
