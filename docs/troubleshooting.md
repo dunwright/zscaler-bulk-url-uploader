@@ -508,7 +508,7 @@ logging.basicConfig(
 ```bash
 # Test authentication only
 python -c "
-from zscaler_bulk_uploader import ZscalerURLUploader, load_config, setup_logging
+from zscaler_bulk_url_uploader import ZscalerURLUploader, load_config, setup_logging
 config = load_config('config.yaml')
 logger = setup_logging(config)
 uploader = ZscalerURLUploader(config, logger)
@@ -519,7 +519,7 @@ print(f'Result: {result}')
 
 # Test CSV parsing only
 python -c "
-from zscaler_bulk_uploader import parse_csv_file
+from zscaler_bulk_url_uploader import parse_csv_file
 import logging
 urls = parse_csv_file('test.csv', logging.getLogger())
 print(f'Found {len(urls)} URLs: {urls[:5]}')
