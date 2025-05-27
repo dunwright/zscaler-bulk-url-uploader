@@ -31,7 +31,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY zscaler_bulk_uploader.py .
+COPY zscaler_bulk_url_uploader.py .
 COPY config.sample.yaml .
 COPY examples/ ./examples/
 COPY README.md .
@@ -49,10 +49,10 @@ VOLUME ["/app/config", "/app/data", "/app/logs"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import zscaler_bulk_uploader; print('OK')" || exit 1
+    CMD python -c "import zscaler_bulk_url_uploader; print('OK')" || exit 1
 
 # Default command
-ENTRYPOINT ["python", "zscaler_bulk_uploader.py"]
+ENTRYPOINT ["python", "zscaler_bulk_url_uploader.py"]
 CMD ["--help"]
 
 # Usage examples in comments:
