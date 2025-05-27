@@ -28,7 +28,7 @@ cd zscaler-bulk-url-uploader
 pip install -r requirements.txt
 
 # Verify installation
-python zscaler_bulk_uploader.py --version
+python zscaler_bulk_url_uploader.py --version
 ```
 
 ### Option 2: PyPI Installation (when published)
@@ -128,7 +128,7 @@ zscaler-env\Scripts\activate
 pip install -r requirements.txt
 
 # Verify installation
-python zscaler_bulk_uploader.py --version
+python zscaler_bulk_url_uploader.py --version
 
 # Deactivate when done
 deactivate
@@ -195,7 +195,7 @@ After installation, verify everything works:
 
 ```bash
 # Check version
-python zscaler_bulk_uploader.py --version
+python zscaler_bulk_url_uploader.py --version
 
 # Test import
 python -c "import zscaler_bulk_uploader; print('Import successful')"
@@ -204,10 +204,10 @@ python -c "import zscaler_bulk_uploader; print('Import successful')"
 python -c "import jwt, cryptography, requests, yaml; print('All dependencies available')"
 
 # Generate sample config
-python zscaler_bulk_uploader.py --generate-config
+python zscaler_bulk_url_uploader.py --generate-config
 
 # Get help
-python zscaler_bulk_uploader.py --help
+python zscaler_bulk_url_uploader.py --help
 ```
 
 ## Common Installation Issues
