@@ -31,23 +31,23 @@ cd zscaler-bulk-url-uploader
 pip install -r requirements.txt
 
 # Generate sample configuration
-python zscaler_bulk_uploader.py --generate-config
+python zscaler_bulk_url_uploader.py --generate-config
 
 # Get authentication help
-python zscaler_bulk_uploader.py --help-auth
+python zscaler_bulk_url_uploader.py --help-auth
 ```
 
 ### Basic Usage
 
 ```bash
 # Interactive mode
-python zscaler_bulk_uploader.py --csv urls.csv
+python zscaler_bulk_url_uploader.py --csv urls.csv
 
 # Using configuration file
-python zscaler_bulk_uploader.py --csv urls.csv --config config.yaml
+python zscaler_bulk_url_uploader.py --csv urls.csv --config config.yaml
 
 # Dry run (validate without uploading)
-python zscaler_bulk_uploader.py --csv urls.csv --dry-run
+python zscaler_bulk_url_uploader.py --csv urls.csv --dry-run
 ```
 
 ## 📋 Prerequisites
@@ -172,7 +172,7 @@ export ZSCALER_PRIVATE_KEY_PATH="./private_key.pem"
 ## 🔧 Command Line Options
 
 ```bash
-python zscaler_bulk_uploader.py [OPTIONS]
+python zscaler_bulk_url_uploader.py [OPTIONS]
 
 Options:
   --csv PATH              CSV file containing URLs to upload
@@ -190,12 +190,12 @@ Options:
 
 ### Basic Upload
 ```bash
-python zscaler_bulk_uploader.py --csv my_urls.csv
+python zscaler_bulk_url_uploader.py --csv my_urls.csv
 ```
 
 ### With Custom Configuration
 ```bash
-python zscaler_bulk_uploader.py \
+python zscaler_bulk_url_uploader.py \
   --csv urls.csv \
   --config /path/to/config.yaml \
   --verbose
@@ -203,13 +203,13 @@ python zscaler_bulk_uploader.py \
 
 ### Validation Only
 ```bash
-python zscaler_bulk_uploader.py --csv urls.csv --dry-run
+python zscaler_bulk_url_uploader.py --csv urls.csv --dry-run
 ```
 
 ### Automated Script
 ```bash
 #!/bin/bash
-python zscaler_bulk_uploader.py \
+python zscaler_bulk_url_uploader.py \
   --csv daily_urls.csv \
   --config production.yaml \
   --category "Daily Blocked Sites" \
@@ -244,7 +244,7 @@ python zscaler_bulk_uploader.py \
 
 Enable debug logging:
 ```bash
-python zscaler_bulk_uploader.py --csv urls.csv --verbose
+python zscaler_bulk_url_uploader.py --csv urls.csv --verbose
 ```
 
 Check log file:
@@ -259,7 +259,7 @@ tail -f zscaler_uploader.log
 pytest tests/
 
 # Run with coverage
-pytest --cov=zscaler_bulk_uploader tests/
+pytest --cov=zscaler_bulk_url_uploader tests/
 
 # Run specific test
 pytest tests/test_authentication.py
@@ -283,13 +283,13 @@ pip install -r requirements.txt
 pre-commit install
 
 # Run code formatting
-black zscaler_bulk_uploader.py
+black zscaler_bulk_url_uploader.py
 
 # Run linting
-flake8 zscaler_bulk_uploader.py
+flake8 zscaler_bulk_url_uploader.py
 
 # Run type checking
-mypy zscaler_bulk_uploader.py
+mypy zscaler_bulk_url_uploader.py
 ```
 
 ## 📚 Documentation
