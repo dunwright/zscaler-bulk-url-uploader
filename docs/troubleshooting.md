@@ -15,11 +15,11 @@ python3 --version
 python -c "import jwt, cryptography, requests, yaml; print('✅ All dependencies available')"
 
 # 3. Test configuration
-python zscaler_bulk_uploader.py --generate-config
-python zscaler_bulk_uploader.py --config config.yaml --dry-run --csv examples/sample_urls.csv
+python zscaler_bulk_url_uploader.py --generate-config
+python zscaler_bulk_url_uploader.py --config config.yaml --dry-run --csv examples/sample_urls.csv
 
 # 4. Enable verbose logging
-python zscaler_bulk_uploader.py --verbose --dry-run --csv examples/sample_urls.csv
+python zscaler_bulk_url_uploader.py --verbose --dry-run --csv examples/sample_urls.csv
 
 # 5. Check log file
 tail -f zscaler_uploader.log
@@ -180,7 +180,7 @@ curl -I -X GET "https://api.zsapi.net/zia/api/v1/urlCategories/lite" \
 ls -la your_file.csv
 
 # Use absolute path
-python zscaler_bulk_uploader.py --csv /full/path/to/file.csv
+python zscaler_bulk_url_uploader.py --csv /full/path/to/file.csv
 
 # Check permissions
 chmod 644 your_file.csv
@@ -357,7 +357,7 @@ python3.8 --version
 python3.9 --version
 
 # Use specific version
-python3.8 zscaler_bulk_uploader.py
+python3.8 zscaler_bulk_url_uploader.py
 
 # Install newer Python (Ubuntu example)
 sudo apt install python3.9 python3.9-pip
@@ -374,10 +374,10 @@ sudo apt install python3.9 python3.9-pip
 **Solutions:**
 ```bash
 # Generate sample configuration
-python zscaler_bulk_uploader.py --generate-config
+python zscaler_bulk_url_uploader.py --generate-config
 
 # Use full path
-python zscaler_bulk_uploader.py --config /full/path/to/config.yaml
+python zscaler_bulk_url_uploader.py --config /full/path/to/config.yaml
 
 # Check current directory
 ls -la config.yaml
