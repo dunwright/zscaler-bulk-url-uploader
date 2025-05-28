@@ -25,7 +25,7 @@ setup(
     name="zscaler-bulk-url-uploader",
     version="1.0.0",
     author="GitHub Community",
-    author_email="your-email@example.com",
+    author_email="dunwright@gmail.com",
     description="Bulk upload URLs to Zscaler Internet Access custom URL categories",
     long_description=long_description,
     long_description_content_type="text/markdown",
