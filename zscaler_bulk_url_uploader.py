@@ -477,7 +477,7 @@ def validate_url(url: str) -> bool:
 
 
 def parse_csv_file(file_path: str, logger: logging.Logger) -> List[str]:
-    """Parse CSV file and extract URLs with validation"""
+    """Parse CSV file and extract URLs with validation - supports multiple formats"""
     urls = []
     invalid_urls = []
     
@@ -489,33 +489,88 @@ def parse_csv_file(file_path: str, logger: logging.Logger) -> List[str]:
         logger.info(f"Parsing CSV file: {file_path}")
         
         with open(file_path, 'r', newline='', encoding='utf-8') as csvfile:
-            # Auto-detect CSV format
+            # Read a sample to detect format
             sample = csvfile.read(1024)
             csvfile.seek(0)
             
-            try:
-                sniffer = csv.Sniffer()
-                delimiter = sniffer.sniff(sample).delimiter
-                has_header = sniffer.has_header(sample)
-            except:
-                delimiter = ','
-                has_header = False
+            # Check if file looks like a simple list (one URL per line)
+            sample_lines = sample.strip().split('\n')
+            looks_like_url_list = all(
+                '.' in line.strip() and ',' not in line.strip() 
+                for line in sample_lines[:3] if line.strip()
+            )
             
-            reader = csv.reader(csvfile, delimiter=delimiter)
+            # Check if file looks like space-separated URLs on single/few lines
+            looks_like_space_separated = False
+            if len(sample_lines) <= 3:  # Few lines only
+                for line in sample_lines:
+                    if line.strip():
+                        # Check if line contains multiple space-separated URLs
+                        parts = line.strip().split()
+                        if len(parts) > 1 and all('.' in part for part in parts):
+                            looks_like_space_separated = True
+                            break
             
-            # Skip header if present
-            if has_header:
-                headers = next(reader, None)
-                logger.debug(f"CSV headers detected: {headers}")
-            
-            for row_num, row in enumerate(reader, start=1):
-                for col_num, cell in enumerate(row):
-                    if cell and cell.strip():
-                        cleaned_url = clean_url(cell)
+            if looks_like_space_separated:
+                # Treat as space-separated URLs
+                logger.info("Detected space-separated URL format")
+                csvfile.seek(0)
+                for line_num, line in enumerate(csvfile, start=1):
+                    line = line.strip()
+                    if line:  # Skip empty lines
+                        # Split on whitespace (spaces, tabs)
+                        parts = line.split()
+                        for part_num, part in enumerate(parts, start=1):
+                            cleaned_url = clean_url(part)
+                            if validate_url(cleaned_url):
+                                urls.append(cleaned_url)
+                            else:
+                                # Only log as invalid if it looks like it might be a URL attempt
+                                if '.' in part or len(part) > 3:
+                                    invalid_urls.append((line_num, part_num, part))
+                                    
+            elif looks_like_url_list:
+                # Treat as simple URL list (one per line)
+                logger.info("Detected simple URL list format (one URL per line)")
+                csvfile.seek(0)
+                for line_num, line in enumerate(csvfile, start=1):
+                    url = line.strip()
+                    if url:  # Skip empty lines
+                        cleaned_url = clean_url(url)
                         if validate_url(cleaned_url):
                             urls.append(cleaned_url)
                         else:
-                            invalid_urls.append((row_num, col_num, cell))
+                            invalid_urls.append((line_num, 1, url))
+            else:
+                # Treat as CSV with potential headers and multiple columns
+                logger.info("Detected CSV format with potential headers/columns")
+                csvfile.seek(0)
+                
+                try:
+                    sniffer = csv.Sniffer()
+                    delimiter = sniffer.sniff(sample).delimiter
+                    has_header = sniffer.has_header(sample)
+                except:
+                    delimiter = ','
+                    has_header = False
+                
+                reader = csv.reader(csvfile, delimiter=delimiter)
+                
+                # Skip header if present
+                if has_header:
+                    headers = next(reader, None)
+                    logger.debug(f"CSV headers detected: {headers}")
+                
+                for row_num, row in enumerate(reader, start=1):
+                    for col_num, cell in enumerate(row):
+                        if cell and cell.strip():
+                            cleaned_url = clean_url(cell)
+                            if validate_url(cleaned_url):
+                                urls.append(cleaned_url)
+                            else:
+                                # Only log as invalid if it looks like it might be a URL attempt
+                                if '.' in cell or len(cell) > 3:
+                                    invalid_urls.append((row_num, col_num, cell))
         
         # Remove duplicates while preserving order
         seen = set()
