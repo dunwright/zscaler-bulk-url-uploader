@@ -1031,20 +1031,8 @@ Examples:
         logger.info(f"Category {url_list_type} list currently has {len(existing_urls)} URLs")
         print(f"\n📊 Selected list ({url_list_type}) currently has {len(existing_urls)} URLs")
         
-        # Check for duplicates in the selected list
-        duplicates = find_duplicates(urls_to_upload, existing_urls)
-        
-        if duplicates:
-            logger.warning(f"Found {len(duplicates)} duplicate URLs in {url_list_type} list")
-            if confirm_duplicate_removal(duplicates):
-                # Remove duplicates from upload list
-                duplicate_set = set(dup.lower() for dup in duplicates)
-                urls_to_upload = [url for url in urls_to_upload if url.lower() not in duplicate_set]
-                logger.info(f"Removed {len(duplicates)} duplicates")
-                print(f"✅ Removed {len(duplicates)} duplicates")
-            else:
-                logger.info("Proceeding with duplicates (they will be ignored by Zscaler)")
-                print("⚠️  Proceeding with duplicates (they will be ignored by Zscaler)")
+        # Handle duplicates in both URL lists comprehensively
+        urls_to_upload = handle_all_duplicates(urls_to_upload, category_details, selected_category, url_list_type, logger)
         
         if not urls_to_upload:
             logger.info("No new URLs to upload after removing duplicates.")
