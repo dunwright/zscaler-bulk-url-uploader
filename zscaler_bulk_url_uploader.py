@@ -43,7 +43,7 @@ except ImportError as e:
     sys.exit(1)
 
 # Version information
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "GitHub Community"
 
 # Configuration defaults
@@ -379,8 +379,8 @@ class ZscalerURLUploader:
             self.logger.error(f"Failed to fetch category details: {e}")
             raise APIError(f"Failed to fetch category details: {e}")
     
-    def add_urls_to_category(self, category_id: str, urls: List[str]) -> bool:
-        """Add URLs to a category using incremental update"""
+    def add_urls_to_category(self, category_id: str, urls: List[str], category_name: str) -> bool:
+        """Add URLs to a category using incremental update - FIXED VERSION"""
         try:
             self.logger.info(f"Adding {len(urls)} URLs to category {category_id}")
             
@@ -393,7 +393,12 @@ class ZscalerURLUploader:
                     batch = urls[i:i + batch_size]
                     self.logger.info(f"Processing batch {i//batch_size + 1} ({len(batch)} URLs)")
                     
-                    payload = {"urls": batch}
+                    # FIXED: Include required fields for OneAPI
+                    payload = {
+                        "configuredName": category_name,
+                        "customCategory": True,
+                        "urls": batch
+                    }
                     response = self._make_request(
                         'PUT', 
                         f'/urlCategories/{category_id}?action=ADD_TO_LIST',
@@ -402,7 +407,12 @@ class ZscalerURLUploader:
                     
                     self.logger.info(f"Batch {i//batch_size + 1} uploaded successfully")
             else:
-                payload = {"urls": urls}
+                # FIXED: Include required fields for OneAPI
+                payload = {
+                    "configuredName": category_name,
+                    "customCategory": True,
+                    "urls": urls
+                }
                 response = self._make_request(
                     'PUT', 
                     f'/urlCategories/{category_id}?action=ADD_TO_LIST',
@@ -533,6 +543,77 @@ def parse_csv_file(file_path: str, logger: logging.Logger) -> List[str]:
     except Exception as e:
         logger.error(f"Failed to parse CSV file: {e}")
         raise ConfigurationError(f"Failed to parse CSV file: {e}")
+
+
+def display_categories(categories: List[Dict]) -> None:
+    """Display available custom URL categories"""
+    print("\n📋 Available Custom URL Categories:")
+    print("-" * 60)
+    for i, category in enumerate(categories, 1):
+        name = category.get('configuredName', 'Unnamed')
+        category_id = category.get('id', 'Unknown')
+        description = category.get('description', 'No description')
+        url_count = category.get('customUrlsCount', 0)
+        
+        print(f"{i:2d}. {name}")
+        print(f"    ID: {category_id}")
+        print(f"    Description: {description}")
+        print(f"    Current URLs: {url_count}")
+        print()
+
+
+def select_category(categories: List[Dict]) -> Optional[Dict]:
+    """Let user select a category from the list"""
+    while True:
+        try:
+            choice = input(f"Select category (1-{len(categories)}) or 'q' to quit: ").strip()
+            
+            if choice.lower() == 'q':
+                return None
+            
+            choice_num = int(choice)
+            if 1 <= choice_num <= len(categories):
+                selected = categories[choice_num - 1]
+                print(f"✅ Selected: {selected.get('configuredName')}")
+                return selected
+            else:
+                print(f"❌ Please enter a number between 1 and {len(categories)}")
+                
+        except ValueError:
+            print("❌ Please enter a valid number or 'q' to quit")
+
+
+def find_duplicates(new_urls: List[str], existing_urls: List[str]) -> List[str]:
+    """Find duplicate URLs between new and existing lists"""
+    existing_set = set(url.lower() for url in existing_urls)
+    duplicates = []
+    
+    for url in new_urls:
+        if url.lower() in existing_set:
+            duplicates.append(url)
+    
+    return duplicates
+
+
+def confirm_duplicate_removal(duplicates: List[str]) -> bool:
+    """Ask user to confirm removal of duplicate URLs"""
+    print(f"\n⚠️  Found {len(duplicates)} duplicate URLs:")
+    print("-" * 40)
+    for i, url in enumerate(duplicates[:10], 1):  # Show first 10
+        print(f"{i:2d}. {url}")
+    
+    if len(duplicates) > 10:
+        print(f"    ... and {len(duplicates) - 10} more")
+    
+    print()
+    while True:
+        choice = input("Remove duplicates from upload list? (y/n): ").strip().lower()
+        if choice in ['y', 'yes']:
+            return True
+        elif choice in ['n', 'no']:
+            return False
+        else:
+            print("Please enter 'y' or 'n'")
 
 
 def create_sample_config() -> str:
@@ -772,10 +853,70 @@ Examples:
             logger.error("No custom URL categories found")
             return 1
         
-        # Category selection logic here...
-        # (This would continue with the interactive category selection)
+        # Display categories for user selection
+        display_categories(categories)
         
-        logger.info("Setup completed successfully - ready for URL upload")
+        # Let user select category
+        selected_category = select_category(categories)
+        
+        if not selected_category:
+            print("👋 Operation cancelled.")
+            return 0
+        
+        # Get detailed category information including current URLs
+        category_details = uploader.get_category_details(selected_category['id'])
+        
+        if not category_details:
+            logger.error("Failed to fetch category details")
+            return 1
+        
+        existing_urls = category_details.get('urls', [])
+        logger.info(f"Category currently has {len(existing_urls)} URLs")
+        
+        # Check for duplicates
+        duplicates = find_duplicates(urls_to_upload, existing_urls)
+        
+        if duplicates:
+            if confirm_duplicate_removal(duplicates):
+                # Remove duplicates from upload list
+                duplicate_set = set(dup.lower() for dup in duplicates)
+                urls_to_upload = [url for url in urls_to_upload if url.lower() not in duplicate_set]
+                logger.info(f"Removed {len(duplicates)} duplicates")
+            else:
+                logger.info("Proceeding with duplicates (they will be ignored by Zscaler)")
+        
+        if not urls_to_upload:
+            logger.info("No new URLs to upload after removing duplicates.")
+            return 0
+        
+        print(f"\n📤 Ready to upload {len(urls_to_upload)} URLs")
+        
+        # Final confirmation
+        while True:
+            confirm = input("Proceed with upload? (y/n): ").strip().lower()
+            if confirm in ['y', 'yes']:
+                break
+            elif confirm in ['n', 'no']:
+                print("👋 Operation cancelled.")
+                return 0
+            else:
+                print("Please enter 'y' or 'n'")
+        
+        # FIXED: Upload URLs with category name
+        if uploader.add_urls_to_category(selected_category['id'], urls_to_upload, selected_category.get('configuredName')):
+            # Activate changes
+            if uploader.activate_changes():
+                print("\n🎉 Bulk URL upload completed successfully!")
+                print(f"✅ Added {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}'")
+                logger.info(f"Successfully uploaded {len(urls_to_upload)} URLs to category {selected_category['id']}")
+            else:
+                print("\n⚠️  URLs uploaded but activation failed. Please activate manually in the Zscaler portal.")
+                logger.warning("Configuration activation failed")
+        else:
+            print("\n❌ Upload failed!")
+            logger.error("URL upload failed")
+            return 1
+        
         return 0
         
     except KeyboardInterrupt:
