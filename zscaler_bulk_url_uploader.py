@@ -383,6 +383,7 @@ class ZscalerURLUploader:
         """Add URLs to a category using incremental update - FIXED VERSION"""
         try:
             self.logger.info(f"Adding {len(urls)} URLs to category {category_id} ({url_list_type} list)")
+            self.logger.info(f"URLs to add: {urls}")  # Debug logging
             
             # Split into batches if needed
             batch_size = self.config['upload']['batch_size']
@@ -392,6 +393,7 @@ class ZscalerURLUploader:
                 for i in range(0, len(urls), batch_size):
                     batch = urls[i:i + batch_size]
                     self.logger.info(f"Processing batch {i//batch_size + 1} ({len(batch)} URLs)")
+                    self.logger.info(f"Batch URLs: {batch}")  # Debug logging
                     
                     # FIXED: Include required fields for OneAPI with specified URL list type
                     payload = {
@@ -399,6 +401,9 @@ class ZscalerURLUploader:
                         "customCategory": True,
                         url_list_type: batch  # Use dynamic key for URL list type
                     }
+                    
+                    self.logger.info(f"API Payload: {json.dumps(payload, indent=2)}")  # Debug logging
+                    
                     response = self._make_request(
                         'PUT', 
                         f'/urlCategories/{category_id}?action=ADD_TO_LIST',
@@ -413,6 +418,9 @@ class ZscalerURLUploader:
                     "customCategory": True,
                     url_list_type: urls  # Use dynamic key for URL list type
                 }
+                
+                self.logger.info(f"API Payload: {json.dumps(payload, indent=2)}")  # Debug logging
+                
                 response = self._make_request(
                     'PUT', 
                     f'/urlCategories/{category_id}?action=ADD_TO_LIST',
@@ -458,19 +466,38 @@ def clean_url(url: str) -> str:
 
 
 def validate_url(url: str) -> bool:
-    """Basic URL validation"""
+    """Basic URL validation - supports wildcards and standard domains"""
     if not url or not url.strip():
         return False
     
     cleaned = clean_url(url)
     
-    # Basic checks
+    # Handle wildcard domains (starting with .)
+    if cleaned.startswith('.'):
+        # Wildcard domain: must have at least one dot after the leading dot
+        # e.g., .example.com, .wildcard.net
+        domain_part = cleaned[1:]  # Remove leading dot
+        if not domain_part or '.' not in domain_part:
+            return False
+        # Check the domain part after the wildcard
+        return '.' in domain_part and len(domain_part) > 2
+    
+    # Regular domain validation
     if not cleaned or '.' not in cleaned:
         return False
     
     # Check for invalid characters
     invalid_chars = ['<', '>', '"', '|', '^', '`', '{', '}', '\\']
     if any(char in cleaned for char in invalid_chars):
+        return False
+    
+    # Basic domain structure check
+    parts = cleaned.split('.')
+    if len(parts) < 2:
+        return False
+    
+    # Each part should have at least one character
+    if any(not part for part in parts):
         return False
     
     return True
@@ -491,7 +518,6 @@ def parse_csv_file(file_path: str, logger: logging.Logger) -> List[str]:
         with open(file_path, 'r', newline='', encoding='utf-8') as csvfile:
             # Read all content
             content = csvfile.read().strip()
-            csvfile.seek(0)
             
             # Split into lines
             lines = [line.strip() for line in content.split('\n') if line.strip()]
@@ -500,86 +526,64 @@ def parse_csv_file(file_path: str, logger: logging.Logger) -> List[str]:
                 logger.warning("CSV file is empty")
                 return []
             
-            # Check if file looks like space-separated URLs on single/few lines
-            looks_like_space_separated = False
-            if len(lines) <= 3:  # Few lines only
-                for line in lines:
-                    if line.strip():
-                        # Check if line contains multiple space-separated URLs
-                        parts = line.split()
-                        if len(parts) > 1 and all('.' in part for part in parts):
-                            looks_like_space_separated = True
-                            break
+            logger.info(f"Found {len(lines)} non-empty lines in file")
             
-            # Check if file looks like a simple list (one URL per line)
-            looks_like_url_list = False
-            if not looks_like_space_separated:
-                looks_like_url_list = all(
-                    '.' in line and ' ' not in line.strip() and ',' not in line 
-                    for line in lines if line.strip()
-                )
+            # Smart parsing: handle each line individually
+            logger.info("Using flexible parsing (handles mixed formats)")
             
-            if looks_like_space_separated:
-                # Treat as space-separated URLs
-                logger.info("Detected space-separated URL format")
-                for line_num, line in enumerate(lines, start=1):
-                    if line:  # Skip empty lines
-                        # Split on whitespace (spaces, tabs)
-                        parts = line.split()
-                        logger.debug(f"Line {line_num}: Found {len(parts)} space-separated parts: {parts}")
-                        for part_num, part in enumerate(parts, start=1):
-                            cleaned_url = clean_url(part)
-                            if validate_url(cleaned_url):
-                                urls.append(cleaned_url)
-                                logger.debug(f"Added valid URL: {cleaned_url}")
-                            else:
-                                # Only log as invalid if it looks like it might be a URL attempt
-                                if '.' in part or len(part) > 3:
-                                    invalid_urls.append((line_num, part_num, part))
-                                    logger.debug(f"Invalid URL: {part}")
-                                    
-            elif looks_like_url_list:
-                # Treat as simple URL list (one per line)
-                logger.info("Detected simple URL list format (one URL per line)")
-                for line_num, line in enumerate(lines, start=1):
-                    if line:  # Skip empty lines
+            for line_num, line in enumerate(lines, start=1):
+                logger.debug(f"Processing line {line_num}: '{line}'")
+                
+                # Check if this line contains multiple space-separated URLs
+                if ' ' in line and ',' not in line:
+                    # Likely space-separated URLs on this line
+                    parts = line.split()
+                    logger.debug(f"Line {line_num}: Detected {len(parts)} space-separated parts: {parts}")
+                    
+                    for part_num, part in enumerate(parts, start=1):
+                        cleaned_url = clean_url(part)
+                        if validate_url(cleaned_url):
+                            urls.append(cleaned_url)
+                            logger.debug(f"Added URL from line {line_num}, part {part_num}: {cleaned_url}")
+                        else:
+                            if '.' in part or len(part) > 3:
+                                invalid_urls.append((line_num, part_num, part))
+                                logger.debug(f"Invalid URL at line {line_num}, part {part_num}: {part}")
+                
+                elif ',' in line:
+                    # Likely CSV format on this line
+                    logger.debug(f"Line {line_num}: Detected CSV format")
+                    import io
+                    reader = csv.reader(io.StringIO(line))
+                    try:
+                        row = next(reader)
+                        for col_num, cell in enumerate(row, start=1):
+                            if cell and cell.strip():
+                                cleaned_url = clean_url(cell)
+                                if validate_url(cleaned_url):
+                                    urls.append(cleaned_url)
+                                    logger.debug(f"Added URL from line {line_num}, col {col_num}: {cleaned_url}")
+                                else:
+                                    if '.' in cell or len(cell) > 3:
+                                        invalid_urls.append((line_num, col_num, cell))
+                    except:
+                        # Fall back to treating as single URL
                         cleaned_url = clean_url(line)
                         if validate_url(cleaned_url):
                             urls.append(cleaned_url)
+                            logger.debug(f"Added URL from line {line_num} (fallback): {cleaned_url}")
                         else:
                             invalid_urls.append((line_num, 1, line))
-            else:
-                # Treat as CSV with potential headers and multiple columns
-                logger.info("Detected CSV format with potential headers/columns")
-                csvfile.seek(0)
                 
-                try:
-                    sample = csvfile.read(1024)
-                    csvfile.seek(0)
-                    sniffer = csv.Sniffer()
-                    delimiter = sniffer.sniff(sample).delimiter
-                    has_header = sniffer.has_header(sample)
-                except:
-                    delimiter = ','
-                    has_header = False
-                
-                reader = csv.reader(csvfile, delimiter=delimiter)
-                
-                # Skip header if present
-                if has_header:
-                    headers = next(reader, None)
-                    logger.debug(f"CSV headers detected: {headers}")
-                
-                for row_num, row in enumerate(reader, start=1):
-                    for col_num, cell in enumerate(row):
-                        if cell and cell.strip():
-                            cleaned_url = clean_url(cell)
-                            if validate_url(cleaned_url):
-                                urls.append(cleaned_url)
-                            else:
-                                # Only log as invalid if it looks like it might be a URL attempt
-                                if '.' in cell or len(cell) > 3:
-                                    invalid_urls.append((row_num, col_num, cell))
+                else:
+                    # Single URL on this line
+                    logger.debug(f"Line {line_num}: Detected single URL format")
+                    cleaned_url = clean_url(line)
+                    if validate_url(cleaned_url):
+                        urls.append(cleaned_url)
+                        logger.debug(f"Added URL from line {line_num}: {cleaned_url}")
+                    else:
+                        invalid_urls.append((line_num, 1, line))
         
         # Remove duplicates while preserving order
         seen = set()
@@ -595,7 +599,7 @@ def parse_csv_file(file_path: str, logger: logging.Logger) -> List[str]:
                 duplicates += 1
         
         logger.info(f"Parsed {len(unique_urls)} unique valid URLs from CSV")
-        logger.info(f"URLs found: {unique_urls}")  # Debug logging
+        logger.info(f"Final URL list: {unique_urls}")  # Debug logging
         if duplicates > 0:
             logger.info(f"Removed {duplicates} duplicate URLs")
         if invalid_urls:
