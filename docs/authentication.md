@@ -348,4 +348,4 @@ After authentication setup:
 - 🔧 [Configuration Guide](configuration.md)
 - 🐛 [Troubleshooting Guide](troubleshooting.md)
 - 💬 [Community Discussions](https://github.com/dunwright/zscaler-bulk-url-uploader/discussions)
-- 📧 [Contact Support](mailto:your-email@example.com)
+- 📧 [Contact Support](mailto:dunwright@gmail.com)
