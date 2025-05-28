@@ -618,9 +618,7 @@ def display_categories(categories: List[Dict]) -> None:
 
 
 def display_category_details(category_details: Dict, selected_category: Dict) -> None:
-    """
-    Display detailed information about a category including both URL lists
-    """
+    """Display detailed information about a category including both URL lists"""
     custom_urls = category_details.get('urls', [])
     db_categorized_urls = category_details.get('dbCategorizedUrls', [])
     
@@ -666,22 +664,8 @@ def select_category(categories: List[Dict]) -> Optional[Dict]:
             print("❌ Please enter a valid number or 'q' to quit")
 
 
-def find_duplicates(new_urls: List[str], existing_urls: List[str]) -> List[str]:
-    """Find duplicate URLs between new and existing lists"""
-    existing_set = set(url.lower() for url in existing_urls)
-    duplicates = []
-    
-    for url in new_urls:
-        if url.lower() in existing_set:
-            duplicates.append(url)
-    
-    return duplicates
-
-
 def choose_url_list_type() -> str:
-    """
-    Let user choose which URL list to add URLs to
-    """
+    """Let user choose which URL list to add URLs to"""
     print("\n📝 URL List Types:")
     print("1. Custom URLs (urls) - Administrator-defined URLs")
     print("2. DB Categorized URLs (dbCategorizedUrls) - URLs that retain parent category")
@@ -697,32 +681,94 @@ def choose_url_list_type() -> str:
             print("Please enter '1' or '2'")
 
 
+def find_duplicates(new_urls: List[str], existing_urls: List[str]) -> List[str]:
+    """Find duplicate URLs between new and existing lists"""
+    existing_set = set(url.lower() for url in existing_urls)
+    duplicates = []
+    
+    for url in new_urls:
+        if url.lower() in existing_set:
+            duplicates.append(url)
+    
+    return duplicates
+
+
+def check_all_duplicates(new_urls: List[str], category_details: Dict, url_list_type: str) -> Tuple[List[str], List[str]]:
+    """
+    Check for duplicates in both URL lists and return comprehensive duplicate info
+    Returns: (duplicates_in_selected_list, duplicates_in_other_list)
+    """
+    selected_list_urls = category_details.get(url_list_type, [])
+    other_list_type = 'dbCategorizedUrls' if url_list_type == 'urls' else 'urls'
+    other_list_urls = category_details.get(other_list_type, [])
+    
+    # Find duplicates in selected list
+    duplicates_in_selected = find_duplicates(new_urls, selected_list_urls)
+    
+    # Find duplicates in other list
+    duplicates_in_other = find_duplicates(new_urls, other_list_urls)
+    
+    return duplicates_in_selected, duplicates_in_other
+
+
+def handle_all_duplicates(urls_to_upload: List[str], category_details: Dict, selected_category: Dict, url_list_type: str, logger) -> List[str]:
+    """Handle duplicates in both URL lists and return cleaned URL list"""
+    duplicates_in_selected, duplicates_in_other = check_all_duplicates(urls_to_upload, category_details, url_list_type)
+    
+    # Get list type names for display
+    selected_list_name = "Custom URLs" if url_list_type == 'urls' else "DB Categorized URLs"
+    other_list_type = 'dbCategorizedUrls' if url_list_type == 'urls' else 'urls'
+    other_list_name = "DB Categorized URLs" if other_list_type == 'dbCategorizedUrls' else "Custom URLs"
+    
+    all_duplicates = set()
+    
+    # Handle duplicates in selected list
+    if duplicates_in_selected:
+        logger.warning(f"Found {len(duplicates_in_selected)} duplicate URLs in {url_list_type} list")
+        print(f"\n⚠️  Found {len(duplicates_in_selected)} URLs already in {selected_list_name} list:")
+        print("-" * 60)
+        for i, url in enumerate(duplicates_in_selected[:5], 1):
+            print(f"{i:2d}. {url}")
+        if len(duplicates_in_selected) > 5:
+            print(f"    ... and {len(duplicates_in_selected) - 5} more")
+        
+        print(f"\nThese URLs are already in the target {selected_list_name} list.")
+        if input("Remove these duplicates from upload? (y/n): ").strip().lower() in ['y', 'yes']:
+            all_duplicates.update(dup.lower() for dup in duplicates_in_selected)
+            logger.info(f"Will remove {len(duplicates_in_selected)} duplicates from {url_list_type} list")
+        else:
+            logger.info(f"Proceeding with duplicates in {url_list_type} list (they will be ignored by Zscaler)")
+    
+    # Handle duplicates in other list
+    if duplicates_in_other:
+        logger.warning(f"Found {len(duplicates_in_other)} URLs already in {other_list_type} list")
+        print(f"\n⚠️  Found {len(duplicates_in_other)} URLs already in {other_list_name} list:")
+        print("-" * 60)
+        for i, url in enumerate(duplicates_in_other[:5], 1):
+            print(f"{i:2d}. {url}")
+        if len(duplicates_in_other) > 5:
+            print(f"    ... and {len(duplicates_in_other) - 5} more")
+        
+        print(f"\nThese URLs exist in the other list ({other_list_name}).")
+        print("Adding them to your selected list will create cross-list duplicates.")
+        if input("Remove these cross-list duplicates from upload? (y/n): ").strip().lower() in ['y', 'yes']:
+            all_duplicates.update(dup.lower() for dup in duplicates_in_other)
+            logger.info(f"Will remove {len(duplicates_in_other)} cross-list duplicates")
+        else:
+            logger.info(f"Proceeding with cross-list duplicates (URLs will exist in both lists)")
+    
+    # Remove all selected duplicates
+    if all_duplicates:
+        original_count = len(urls_to_upload)
+        urls_to_upload = [url for url in urls_to_upload if url.lower() not in all_duplicates]
+        removed_count = original_count - len(urls_to_upload)
+        logger.info(f"Removed {removed_count} total duplicates")
+        print(f"✅ Removed {removed_count} duplicate URLs from upload list")
+    
+    return urls_to_upload
+
+
 def confirm_duplicate_removal(duplicates: List[str]) -> bool:
-    """
-    Display detailed information about a category including both URL lists
-    """
-    custom_urls = category_details.get('urls', [])
-    db_categorized_urls = category_details.get('dbCategorizedUrls', [])
-    
-    print(f"\n📊 Category '{selected_category.get('configuredName')}' Details:")
-    print("-" * 60)
-    print(f"Custom URLs: {len(custom_urls)}")
-    print(f"DB Categorized URLs: {len(db_categorized_urls)}")
-    print(f"Total URLs: {len(custom_urls) + len(db_categorized_urls)}")
-    
-    if custom_urls:
-        print(f"\nSample Custom URLs (first 3):")
-        for url in custom_urls[:3]:
-            print(f"  • {url}")
-        if len(custom_urls) > 3:
-            print(f"  ... and {len(custom_urls) - 3} more")
-    
-    if db_categorized_urls:
-        print(f"\nSample DB Categorized URLs (first 3):")
-        for url in db_categorized_urls[:3]:
-            print(f"  • {url}")
-        if len(db_categorized_urls) > 3:
-            print(f"  ... and {len(db_categorized_urls) - 3} more")
     """Ask user to confirm removal of duplicate URLs"""
     print(f"\n⚠️  Found {len(duplicates)} duplicate URLs:")
     print("-" * 40)
@@ -1083,3 +1129,4 @@ Examples:
 
 if __name__ == "__main__":
     sys.exit(main())
+            
