@@ -562,6 +562,34 @@ def display_categories(categories: List[Dict]) -> None:
         print()
 
 
+def display_category_details(category_details: Dict, selected_category: Dict) -> None:
+    """
+    Display detailed information about a category including both URL lists
+    """
+    custom_urls = category_details.get('urls', [])
+    db_categorized_urls = category_details.get('dbCategorizedUrls', [])
+    
+    print(f"\n📊 Category '{selected_category.get('configuredName')}' Details:")
+    print("-" * 60)
+    print(f"Custom URLs: {len(custom_urls)}")
+    print(f"DB Categorized URLs: {len(db_categorized_urls)}")
+    print(f"Total URLs: {len(custom_urls) + len(db_categorized_urls)}")
+    
+    if custom_urls:
+        print(f"\nSample Custom URLs (first 3):")
+        for url in custom_urls[:3]:
+            print(f"  • {url}")
+        if len(custom_urls) > 3:
+            print(f"  ... and {len(custom_urls) - 3} more")
+    
+    if db_categorized_urls:
+        print(f"\nSample DB Categorized URLs (first 3):")
+        for url in db_categorized_urls[:3]:
+            print(f"  • {url}")
+        if len(db_categorized_urls) > 3:
+            print(f"  ... and {len(db_categorized_urls) - 3} more")
+
+
 def select_category(categories: List[Dict]) -> Optional[Dict]:
     """Let user select a category from the list"""
     while True:
