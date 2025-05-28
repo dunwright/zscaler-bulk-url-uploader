@@ -853,15 +853,38 @@ Examples:
             logger.error("No custom URL categories found")
             return 1
         
-        # Display categories for user selection
-        display_categories(categories)
+        # Determine category selection method
+        selected_category = None
         
-        # Let user select category
-        selected_category = select_category(categories)
+        # Check if category specified via command line
+        if args.category:
+            logger.info(f"Looking for category: {args.category}")
+            
+            # Try to find category by name or ID
+            for category in categories:
+                if (category.get('configuredName', '').lower() == args.category.lower() or 
+                    category.get('id', '').upper() == args.category.upper()):
+                    selected_category = category
+                    logger.info(f"Found category: {category.get('configuredName')} (ID: {category.get('id')})")
+                    break
+            
+            if not selected_category:
+                logger.error(f"Category '{args.category}' not found")
+                print(f"\n❌ Category '{args.category}' not found!")
+                print("\nAvailable categories:")
+                display_categories(categories)
+                return 1
+        else:
+            # Interactive category selection
+            print("\n📋 No category specified. Please select from available categories:")
+            display_categories(categories)
+            selected_category = select_category(categories)
+            
+            if not selected_category:
+                print("👋 Operation cancelled.")
+                return 0
         
-        if not selected_category:
-            print("👋 Operation cancelled.")
-            return 0
+        logger.info(f"Selected category: {selected_category.get('configuredName')} (ID: {selected_category.get('id')})")
         
         # Get detailed category information including current URLs
         category_details = uploader.get_category_details(selected_category['id'])
@@ -872,50 +895,55 @@ Examples:
         
         existing_urls = category_details.get('urls', [])
         logger.info(f"Category currently has {len(existing_urls)} URLs")
+        print(f"📊 Category '{selected_category.get('configuredName')}' currently has {len(existing_urls)} URLs")
         
         # Check for duplicates
         duplicates = find_duplicates(urls_to_upload, existing_urls)
         
         if duplicates:
+            logger.warning(f"Found {len(duplicates)} duplicate URLs")
             if confirm_duplicate_removal(duplicates):
                 # Remove duplicates from upload list
                 duplicate_set = set(dup.lower() for dup in duplicates)
                 urls_to_upload = [url for url in urls_to_upload if url.lower() not in duplicate_set]
                 logger.info(f"Removed {len(duplicates)} duplicates")
+                print(f"✅ Removed {len(duplicates)} duplicates")
             else:
                 logger.info("Proceeding with duplicates (they will be ignored by Zscaler)")
+                print("⚠️  Proceeding with duplicates (they will be ignored by Zscaler)")
         
         if not urls_to_upload:
             logger.info("No new URLs to upload after removing duplicates.")
+            print("ℹ️  No new URLs to upload after removing duplicates.")
             return 0
         
-        print(f"\n📤 Ready to upload {len(urls_to_upload)} URLs")
+        print(f"\n📤 Ready to upload {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}'")
         
-        # Final confirmation
-        while True:
-            confirm = input("Proceed with upload? (y/n): ").strip().lower()
-            if confirm in ['y', 'yes']:
-                break
-            elif confirm in ['n', 'no']:
-                print("👋 Operation cancelled.")
-                return 0
+        # Final confirmation (skip in non-interactive mode if category was specified)
+        if not args.category or input("\nProceed with upload? (y/n): ").strip().lower() in ['y', 'yes']:
+            logger.info(f"Starting upload of {len(urls_to_upload)} URLs")
+            
+            # FIXED: Upload URLs with category name
+            if uploader.add_urls_to_category(selected_category['id'], urls_to_upload, selected_category.get('configuredName')):
+                logger.info("URLs uploaded successfully")
+                
+                # Activate changes
+                if uploader.activate_changes():
+                    print("\n🎉 Bulk URL upload completed successfully!")
+                    print(f"✅ Added {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}'")
+                    logger.info(f"Successfully uploaded {len(urls_to_upload)} URLs to category {selected_category['id']}")
+                else:
+                    print("\n⚠️  URLs uploaded but activation failed. Please activate manually in the Zscaler portal.")
+                    logger.warning("Configuration activation failed")
+                    return 1
             else:
-                print("Please enter 'y' or 'n'")
-        
-        # FIXED: Upload URLs with category name
-        if uploader.add_urls_to_category(selected_category['id'], urls_to_upload, selected_category.get('configuredName')):
-            # Activate changes
-            if uploader.activate_changes():
-                print("\n🎉 Bulk URL upload completed successfully!")
-                print(f"✅ Added {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}'")
-                logger.info(f"Successfully uploaded {len(urls_to_upload)} URLs to category {selected_category['id']}")
-            else:
-                print("\n⚠️  URLs uploaded but activation failed. Please activate manually in the Zscaler portal.")
-                logger.warning("Configuration activation failed")
+                print("\n❌ Upload failed!")
+                logger.error("URL upload failed")
+                return 1
         else:
-            print("\n❌ Upload failed!")
-            logger.error("URL upload failed")
-            return 1
+            print("👋 Operation cancelled.")
+            logger.info("Upload cancelled by user")
+            return 0
         
         return 0
         
