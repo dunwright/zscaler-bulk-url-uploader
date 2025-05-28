@@ -295,19 +295,33 @@ class TestZscalerUploader:
     
     @patch.object(ZscalerURLUploader, '_make_request')
     def test_add_urls_to_category(self, mock_make_request):
-        """Test adding URLs to category"""
+        """Test adding URLs to category - FIXED VERSION"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_make_request.return_value = mock_response
         
         urls = ['example.com', 'test.com']
-        result = self.uploader.add_urls_to_category('CUSTOM_01', urls)
+        category_name = 'Test Category'
+        
+        # FIXED: Now includes category_name parameter
+        result = self.uploader.add_urls_to_category('CUSTOM_01', urls, category_name)
         assert result == True
+        
+        # Verify the correct payload was sent
         mock_make_request.assert_called_once()
+        call_args = mock_make_request.call_args
+        assert call_args[0][0] == 'PUT'  # Method
+        assert call_args[0][1] == '/urlCategories/CUSTOM_01?action=ADD_TO_LIST'  # URL
+        
+        # Check that the payload includes required fields
+        payload = call_args[1]['json']
+        assert payload['configuredName'] == category_name
+        assert payload['customCategory'] == True
+        assert payload['urls'] == urls
     
     @patch.object(ZscalerURLUploader, '_make_request')
     def test_add_urls_batch_processing(self, mock_make_request):
-        """Test batch processing for large URL lists"""
+        """Test batch processing for large URL lists - FIXED VERSION"""
         # Set small batch size for testing
         self.uploader.config['upload']['batch_size'] = 2
         
@@ -316,9 +330,47 @@ class TestZscalerUploader:
         mock_make_request.return_value = mock_response
         
         urls = ['url1.com', 'url2.com', 'url3.com']  # 3 URLs, batch size 2
-        result = self.uploader.add_urls_to_category('CUSTOM_01', urls)
+        category_name = 'Test Category'
+        
+        # FIXED: Now includes category_name parameter
+        result = self.uploader.add_urls_to_category('CUSTOM_01', urls, category_name)
         assert result == True
         assert mock_make_request.call_count == 2  # 2 batches
+        
+        # Verify both batches have correct payload structure
+        for call in mock_make_request.call_args_list:
+            payload = call[1]['json']
+            assert 'configuredName' in payload
+            assert 'customCategory' in payload
+            assert 'urls' in payload
+            assert payload['configuredName'] == category_name
+            assert payload['customCategory'] == True
+    
+    @patch.object(ZscalerURLUploader, '_make_request')
+    def test_add_urls_payload_validation(self, mock_make_request):
+        """Test that the payload includes all required OneAPI fields"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_make_request.return_value = mock_response
+        
+        urls = ['example.com']
+        category_name = 'Test Category'
+        
+        self.uploader.add_urls_to_category('CUSTOM_01', urls, category_name)
+        
+        # Extract the payload from the mock call
+        call_args = mock_make_request.call_args
+        payload = call_args[1]['json']
+        
+        # Verify all required OneAPI fields are present
+        required_fields = ['configuredName', 'customCategory', 'urls']
+        for field in required_fields:
+            assert field in payload, f"Required field '{field}' missing from payload"
+        
+        # Verify field values
+        assert payload['configuredName'] == category_name
+        assert payload['customCategory'] == True
+        assert payload['urls'] == urls
     
     @patch.object(ZscalerURLUploader, '_make_request')
     def test_activate_changes(self, mock_make_request):
@@ -375,6 +427,7 @@ class TestIntegration:
         mock_uploader.get_category_details.return_value = {
             'urls': ['existing.com']
         }
+        # FIXED: Mock method now expects 3 parameters
         mock_uploader.add_urls_to_category.return_value = True
         mock_uploader.activate_changes.return_value = True
         mock_uploader_class.return_value = mock_uploader
