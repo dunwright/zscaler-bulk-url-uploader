@@ -379,10 +379,10 @@ class ZscalerURLUploader:
             self.logger.error(f"Failed to fetch category details: {e}")
             raise APIError(f"Failed to fetch category details: {e}")
     
-    def add_urls_to_category(self, category_id: str, urls: List[str], category_name: str) -> bool:
+    def add_urls_to_category(self, category_id: str, urls: List[str], category_name: str, url_list_type: str = 'urls') -> bool:
         """Add URLs to a category using incremental update - FIXED VERSION"""
         try:
-            self.logger.info(f"Adding {len(urls)} URLs to category {category_id}")
+            self.logger.info(f"Adding {len(urls)} URLs to category {category_id} ({url_list_type} list)")
             
             # Split into batches if needed
             batch_size = self.config['upload']['batch_size']
@@ -393,11 +393,11 @@ class ZscalerURLUploader:
                     batch = urls[i:i + batch_size]
                     self.logger.info(f"Processing batch {i//batch_size + 1} ({len(batch)} URLs)")
                     
-                    # FIXED: Include required fields for OneAPI
+                    # FIXED: Include required fields for OneAPI with specified URL list type
                     payload = {
                         "configuredName": category_name,
                         "customCategory": True,
-                        "urls": batch
+                        url_list_type: batch  # Use dynamic key for URL list type
                     }
                     response = self._make_request(
                         'PUT', 
@@ -407,11 +407,11 @@ class ZscalerURLUploader:
                     
                     self.logger.info(f"Batch {i//batch_size + 1} uploaded successfully")
             else:
-                # FIXED: Include required fields for OneAPI
+                # FIXED: Include required fields for OneAPI with specified URL list type
                 payload = {
                     "configuredName": category_name,
                     "customCategory": True,
-                    "urls": urls
+                    url_list_type: urls  # Use dynamic key for URL list type
                 }
                 response = self._make_request(
                     'PUT', 
@@ -419,7 +419,7 @@ class ZscalerURLUploader:
                     json=payload
                 )
             
-            self.logger.info("All URLs added successfully")
+            self.logger.info(f"All URLs added successfully to {url_list_type} list")
             return True
             
         except Exception as e:
@@ -595,7 +595,51 @@ def find_duplicates(new_urls: List[str], existing_urls: List[str]) -> List[str]:
     return duplicates
 
 
+def choose_url_list_type() -> str:
+    """
+    Let user choose which URL list to add URLs to
+    """
+    print("\n📝 URL List Types:")
+    print("1. Custom URLs (urls) - Administrator-defined URLs")
+    print("2. DB Categorized URLs (dbCategorizedUrls) - URLs that retain parent category")
+    print("\nℹ️  Most common choice is 'Custom URLs' for manually curated lists")
+    
+    while True:
+        choice = input("Select URL list type (1-2): ").strip()
+        if choice == '1':
+            return 'urls'
+        elif choice == '2':
+            return 'dbCategorizedUrls'
+        else:
+            print("Please enter '1' or '2'")
+
+
 def confirm_duplicate_removal(duplicates: List[str]) -> bool:
+    """
+    Display detailed information about a category including both URL lists
+    """
+    custom_urls = category_details.get('urls', [])
+    db_categorized_urls = category_details.get('dbCategorizedUrls', [])
+    
+    print(f"\n📊 Category '{selected_category.get('configuredName')}' Details:")
+    print("-" * 60)
+    print(f"Custom URLs: {len(custom_urls)}")
+    print(f"DB Categorized URLs: {len(db_categorized_urls)}")
+    print(f"Total URLs: {len(custom_urls) + len(db_categorized_urls)}")
+    
+    if custom_urls:
+        print(f"\nSample Custom URLs (first 3):")
+        for url in custom_urls[:3]:
+            print(f"  • {url}")
+        if len(custom_urls) > 3:
+            print(f"  ... and {len(custom_urls) - 3} more")
+    
+    if db_categorized_urls:
+        print(f"\nSample DB Categorized URLs (first 3):")
+        for url in db_categorized_urls[:3]:
+            print(f"  • {url}")
+        if len(db_categorized_urls) > 3:
+            print(f"  ... and {len(db_categorized_urls) - 3} more")
     """Ask user to confirm removal of duplicate URLs"""
     print(f"\n⚠️  Found {len(duplicates)} duplicate URLs:")
     print("-" * 40)
@@ -893,15 +937,22 @@ Examples:
             logger.error("Failed to fetch category details")
             return 1
         
-        existing_urls = category_details.get('urls', [])
-        logger.info(f"Category currently has {len(existing_urls)} URLs")
-        print(f"📊 Category '{selected_category.get('configuredName')}' currently has {len(existing_urls)} URLs")
+        # Display detailed category information
+        display_category_details(category_details, selected_category)
         
-        # Check for duplicates
+        # Choose which URL list to add to
+        url_list_type = choose_url_list_type()
+        logger.info(f"Selected URL list type: {url_list_type}")
+        
+        existing_urls = category_details.get(url_list_type, [])
+        logger.info(f"Category {url_list_type} list currently has {len(existing_urls)} URLs")
+        print(f"\n📊 Selected list ({url_list_type}) currently has {len(existing_urls)} URLs")
+        
+        # Check for duplicates in the selected list
         duplicates = find_duplicates(urls_to_upload, existing_urls)
         
         if duplicates:
-            logger.warning(f"Found {len(duplicates)} duplicate URLs")
+            logger.warning(f"Found {len(duplicates)} duplicate URLs in {url_list_type} list")
             if confirm_duplicate_removal(duplicates):
                 # Remove duplicates from upload list
                 duplicate_set = set(dup.lower() for dup in duplicates)
@@ -917,21 +968,21 @@ Examples:
             print("ℹ️  No new URLs to upload after removing duplicates.")
             return 0
         
-        print(f"\n📤 Ready to upload {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}'")
+        print(f"\n📤 Ready to upload {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}' ({url_list_type} list)")
         
         # Final confirmation (skip in non-interactive mode if category was specified)
         if not args.category or input("\nProceed with upload? (y/n): ").strip().lower() in ['y', 'yes']:
-            logger.info(f"Starting upload of {len(urls_to_upload)} URLs")
+            logger.info(f"Starting upload of {len(urls_to_upload)} URLs to {url_list_type} list")
             
-            # FIXED: Upload URLs with category name
-            if uploader.add_urls_to_category(selected_category['id'], urls_to_upload, selected_category.get('configuredName')):
+            # FIXED: Upload URLs with category name and specified list type
+            if uploader.add_urls_to_category(selected_category['id'], urls_to_upload, selected_category.get('configuredName'), url_list_type):
                 logger.info("URLs uploaded successfully")
                 
                 # Activate changes
                 if uploader.activate_changes():
                     print("\n🎉 Bulk URL upload completed successfully!")
-                    print(f"✅ Added {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}'")
-                    logger.info(f"Successfully uploaded {len(urls_to_upload)} URLs to category {selected_category['id']}")
+                    print(f"✅ Added {len(urls_to_upload)} URLs to '{selected_category.get('configuredName')}' ({url_list_type} list)")
+                    logger.info(f"Successfully uploaded {len(urls_to_upload)} URLs to category {selected_category['id']} ({url_list_type} list)")
                 else:
                     print("\n⚠️  URLs uploaded but activation failed. Please activate manually in the Zscaler portal.")
                     logger.warning("Configuration activation failed")
